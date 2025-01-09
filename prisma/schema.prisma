@@ -5,14 +5,17 @@
 // 3. npx prisma generate
 // 4. npx prisma db seed
 
+
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
+        
 
 // 投稿記事テーブル
 model Post {
