@@ -1,6 +1,9 @@
 "use client";
 import { usePathname } from "next/navigation";
 import { twMerge } from "tailwind-merge";
+import { supabase } from "@/utils/supabase"; // ◀ 追加
+import { useAuth } from "@/app/_hooks/useAuth"; // ◀ 追加
+import { useRouter } from "next/navigation"; // ◀ 追加
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faFish,
@@ -11,7 +14,14 @@ import Link from "next/link";
 
 const Header: React.FC = () => {
   const pathname = usePathname();
-
+  // ▼ 追加
+  const router = useRouter();
+  const { isLoading, session } = useAuth();
+  const logout = async () => {
+    await supabase.auth.signOut();
+    router.replace("/");
+  };
+  // ▲ 追加
   const isActivePath = (path: string): boolean => {
     if (path === "/") {
       return pathname === "/";
@@ -20,7 +30,7 @@ const Header: React.FC = () => {
   };
 
   const navItems = [
-    { path: "/", icon: faNewspaper, label: "記事一覧" },
+    { path: "/", icon: faNewspaper, label: "記事" },
     { path: "/about", icon: faCircleInfo, label: "About" },
   ];
 
@@ -65,6 +75,18 @@ const Header: React.FC = () => {
                   <span>{item.label}</span>
                 </Link>
               ))}
+              {/* ▼ 追加 */}
+              {!isLoading &&
+                (session ? (
+                  <button onClick={logout} className="text-white">
+                    Logout
+                  </button>
+                ) : (
+                  <Link href="/login" className="text-white">
+                    Login
+                  </Link>
+                ))}
+              {/* ▲ 追加 */}
             </div>
           </div>
         </div>
