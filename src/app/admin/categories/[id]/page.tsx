@@ -270,7 +270,7 @@ const Page: React.FC = () => {
         </div>
       </form>
 
-      <div className="mb-2 text-2xl font-bold">既存のカテゴリの一覧</div>
+      <div className="mb-2 text-2xl font-bold">他のカテゴリの一覧</div>
       {categories.length === 0 ? (
         <div className="text-gray-500">
           （カテゴリは1個も作成されていません）

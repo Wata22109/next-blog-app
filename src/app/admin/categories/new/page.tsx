@@ -62,10 +62,10 @@ const NewCategoryPage: React.FC = () => {
 
   const validateCategoryName = (name: string): string => {
     if (name.length < 2) {
-      return "カテゴリ名は2文字以上で入力してください";
+      return "2文字以上16文字以内で入力してください";
     }
     if (name.length > 16) {
-      return "カテゴリ名は16文字以内で入力してください";
+      return "2文字以上16文字以内で入力してください";
     }
     if (existingCategories?.some((cat) => cat.name === name)) {
       return "同じ名前のカテゴリが既に存在します";

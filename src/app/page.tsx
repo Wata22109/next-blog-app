@@ -163,7 +163,7 @@ const Page: React.FC = () => {
           onChange={(e) => setSelectedCategory(e.target.value || null)}
           className="rounded-lg border border-gray-300 p-2 focus:border-blue-500 focus:outline-none"
         >
-          <option value="">全てのカテゴリー</option>
+          <option value="">全てのカテゴリ</option>
           {allCategories.map((category) => (
             <option key={category} value={category}>
               {category}

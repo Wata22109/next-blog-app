@@ -20,8 +20,8 @@ type SelectableCategory = {
 // デフォルトのカバー画像の状態
 const defaultCoverImage: CoverImage = {
   url: "",
-  width: 800, // デフォルト値として一般的な値を設定
-  height: 600, // デフォルト値として一般的な値を設定
+  width: 800,
+  height: 600,
 };
 
 const Page: React.FC = () => {
@@ -115,8 +115,8 @@ const Page: React.FC = () => {
         content,
         coverImage: {
           url: coverImage.url,
-          width: coverImage.width || defaultCoverImage.width,
-          height: coverImage.height || defaultCoverImage.height,
+          width: defaultCoverImage.width,
+          height: defaultCoverImage.height,
         },
         categoryIds: checkableCategories
           ? checkableCategories.filter((c) => c.isSelect).map((c) => c.id)
@@ -191,55 +191,66 @@ const Page: React.FC = () => {
   }
 
   if (fetchErrorMsg) {
-    return <div className="text-red-500">{fetchErrorMsg}</div>;
+    return (
+      <div className="text-red-500">
+        <FontAwesomeIcon icon={faTriangleExclamation} className="mr-2" />
+        {fetchErrorMsg}
+      </div>
+    );
   }
 
   return (
-    <main className="p-4">
-      <div className="mb-4 text-2xl font-bold">投稿記事の編集</div>
+    <main className="mx-auto max-w-4xl p-6">
+      <h1 className="mb-6 text-2xl font-bold text-gray-800">投稿記事の編集</h1>
 
       <form
         onSubmit={handleSubmit}
-        className={twMerge("space-y-4", isSubmitting && "opacity-50")}
+        className={twMerge("space-y-6", isSubmitting && "opacity-50")}
       >
-        <div className="space-y-1">
-          <label htmlFor="title" className="block font-bold">
+        {/* タイトル入力 */}
+        <div className="space-y-2">
+          <label htmlFor="title" className="block font-bold text-gray-700">
             タイトル
           </label>
           <input
             type="text"
             id="title"
             name="title"
-            className="w-full rounded-md border-2 px-2 py-1"
+            className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             required
           />
         </div>
 
-        <div className="space-y-1">
-          <label htmlFor="content" className="block font-bold">
+        {/* 本文入力 */}
+        <div className="space-y-2">
+          <label htmlFor="content" className="block font-bold text-gray-700">
             本文
           </label>
           <textarea
             id="content"
             name="content"
-            className="h-48 w-full rounded-md border-2 px-2 py-1"
+            className="h-64 w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
             value={content}
             onChange={(e) => setContent(e.target.value)}
             required
           />
         </div>
 
-        <div className="space-y-1">
-          <label htmlFor="coverImageUrl" className="block font-bold">
+        {/* カバー画像URL入力 */}
+        <div className="space-y-2">
+          <label
+            htmlFor="coverImageUrl"
+            className="block font-bold text-gray-700"
+          >
             カバーイメージ (URL)
           </label>
           <input
             type="url"
             id="coverImageUrl"
             name="coverImageUrl"
-            className="w-full rounded-md border-2 px-2 py-1"
+            className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
             value={coverImage?.url || ""}
             onChange={(e) =>
               setCoverImage({
@@ -251,108 +262,70 @@ const Page: React.FC = () => {
           />
         </div>
 
-        <div className="space-y-1">
-          <label htmlFor="imageWidth" className="block font-bold">
-            画像の幅 (px)
-          </label>
-          <input
-            type="number"
-            id="imageWidth"
-            name="imageWidth"
-            className="w-full rounded-md border-2 px-2 py-1"
-            value={coverImage?.width || defaultCoverImage.width}
-            onChange={(e) =>
-              setCoverImage({
-                ...coverImage,
-                width: parseInt(e.target.value) || defaultCoverImage.width,
-              })
-            }
-            required
-            min="0"
-          />
-        </div>
-
-        <div className="space-y-1">
-          <label htmlFor="imageHeight" className="block font-bold">
-            画像の高さ (px)
-          </label>
-          <input
-            type="number"
-            id="imageHeight"
-            name="imageHeight"
-            className="w-full rounded-md border-2 px-2 py-1"
-            value={coverImage?.height || defaultCoverImage.height}
-            onChange={(e) =>
-              setCoverImage({
-                ...coverImage,
-                height: parseInt(e.target.value) || defaultCoverImage.height,
-              })
-            }
-            required
-            min="0"
-          />
-        </div>
-
-        <div className="space-y-1">
-          <div className="font-bold">カテゴリ</div>
-          <div className="flex flex-wrap gap-x-3.5 gap-y-2">
+        {/* カテゴリ選択 */}
+        <div className="space-y-2">
+          <div className="font-bold text-gray-700">カテゴリ</div>
+          <div className="flex flex-wrap gap-4 rounded-lg border border-gray-300 p-4">
             {checkableCategories?.length ? (
               checkableCategories.map((c) => (
                 <label
                   key={c.id}
-                  className="flex cursor-pointer items-center space-x-1"
+                  className="flex cursor-pointer items-center space-x-2 rounded-full bg-gray-100 px-4 py-2 hover:bg-gray-200"
                 >
                   <input
                     type="checkbox"
                     checked={c.isSelect}
-                    className="cursor-pointer"
+                    className="size-4 cursor-pointer rounded border-gray-300"
                     onChange={() => switchCategoryState(c.id)}
                   />
-                  <span>{c.name}</span>
+                  <span className="text-gray-700">{c.name}</span>
                 </label>
               ))
             ) : (
-              <div>選択可能なカテゴリが存在しません。</div>
+              <div className="text-gray-500">
+                選択可能なカテゴリが存在しません。
+              </div>
             )}
           </div>
         </div>
 
-        <div className="flex justify-end space-x-2">
-          <button
-            type="submit"
-            className={twMerge(
-              "rounded-md px-5 py-1 font-bold",
-              "bg-indigo-500 text-white hover:bg-indigo-600",
-              "disabled:cursor-not-allowed disabled:opacity-50"
-            )}
-            disabled={isSubmitting}
-          >
-            更新
-          </button>
-
+        {/* アクションボタン */}
+        <div className="flex justify-end space-x-4">
           <button
             type="button"
             onClick={handleDelete}
             className={twMerge(
-              "rounded-md px-5 py-1 font-bold",
-              "bg-red-500 text-white hover:bg-red-600",
+              "rounded-lg px-6 py-2 font-bold",
+              "bg-red-500 text-white transition-colors hover:bg-red-600",
               "disabled:cursor-not-allowed disabled:opacity-50"
             )}
             disabled={isSubmitting}
           >
             削除
           </button>
+          <button
+            type="submit"
+            className={twMerge(
+              "rounded-lg px-6 py-2 font-bold",
+              "bg-indigo-500 text-white transition-colors hover:bg-indigo-600",
+              "disabled:cursor-not-allowed disabled:opacity-50"
+            )}
+            disabled={isSubmitting}
+          >
+            更新
+          </button>
         </div>
       </form>
 
+      {/* ローディングオーバーレイ */}
       {isSubmitting && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="flex items-center rounded-lg bg-white px-8 py-4 shadow-lg">
+          <div className="flex items-center space-x-3 rounded-lg bg-white px-8 py-4 shadow-lg">
             <FontAwesomeIcon
               icon={faSpinner}
-              className="mr-2 animate-spin text-gray-500"
+              className="animate-spin text-gray-500"
             />
-            <div className="flex items-center text-gray-500">処理中...</div>
+            <span className="text-gray-500">処理中...</span>
           </div>
         </div>
       )}

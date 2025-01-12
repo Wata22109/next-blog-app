@@ -14,18 +14,17 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { twMerge } from "tailwind-merge";
 import Link from "next/link";
-import { Post } from "@/app/_types/Post";
+import type { PostApiResponse } from "@/app/_types/PostApiResponse";
 import { motion, AnimatePresence } from "framer-motion";
 
 const AdminPostsPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fetchErrorMsg, setFetchErrorMsg] = useState<string | null>(null);
-  const [posts, setPosts] = useState<Post[] | null>(null);
+  const [posts, setPosts] = useState<PostApiResponse[] | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  // 記事一覧を取得する関数
   const fetchPosts = async () => {
     try {
       setIsLoading(true);
@@ -54,7 +53,6 @@ const AdminPostsPage: React.FC = () => {
     fetchPosts();
   }, []);
 
-  // 記事を削除する関数
   const handleDelete = async (id: string, title: string) => {
     if (!window.confirm(`「${title}」を本当に削除しますか？`)) {
       return;
@@ -86,25 +84,24 @@ const AdminPostsPage: React.FC = () => {
     }
   };
 
-  // 検索とフィルタリング
   const filteredPosts = posts?.filter((post) => {
     const matchesSearch =
       post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       post.content.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory =
       !selectedCategory ||
-      post.categories.some((cat) => cat.name === selectedCategory);
+      post.categories.some((cat) => cat.category.name === selectedCategory);
     return matchesSearch && matchesCategory;
   });
 
-  // 全カテゴリのリストを取得
   const allCategories = Array.from(
     new Set(
-      posts?.flatMap((post) => post.categories.map((cat) => cat.name)) || []
+      posts?.flatMap((post) =>
+        post.categories.map((cat) => cat.category.name)
+      ) || []
     )
   );
 
-  // ローディング表示
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -125,7 +122,6 @@ const AdminPostsPage: React.FC = () => {
     );
   }
 
-  // エラー表示
   if (!posts) {
     return (
       <motion.div
@@ -142,7 +138,6 @@ const AdminPostsPage: React.FC = () => {
   return (
     <main className="min-h-screen bg-gray-50">
       <div className="mx-auto max-w-6xl p-6">
-        {/* ヘッダーセクション */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -158,7 +153,6 @@ const AdminPostsPage: React.FC = () => {
             <h1 className="text-3xl font-bold text-gray-800">記事の管理</h1>
           </div>
 
-          {/* 検索・フィルターセクション */}
           <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <div className="relative">
               <input
@@ -179,7 +173,7 @@ const AdminPostsPage: React.FC = () => {
               onChange={(e) => setSelectedCategory(e.target.value || null)}
               className="rounded-lg border border-gray-300 bg-white p-3 shadow-sm transition-all focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             >
-              <option value="">全てのカテゴリー</option>
+              <option value="">全てのカテゴリ</option>
               {allCategories.map((category) => (
                 <option key={category} value={category}>
                   {category}
@@ -197,7 +191,6 @@ const AdminPostsPage: React.FC = () => {
           </div>
         </motion.div>
 
-        {/* 記事一覧 */}
         <AnimatePresence>
           {filteredPosts?.length === 0 ? (
             <motion.div
@@ -238,7 +231,7 @@ const AdminPostsPage: React.FC = () => {
                         {post.categories.length > 0 && (
                           <div className="flex flex-wrap items-center gap-2">
                             <FontAwesomeIcon icon={faTag} />
-                            {post.categories.map((category) => (
+                            {post.categories.map(({ category }) => (
                               <span
                                 key={category.id}
                                 className="rounded-full bg-gray-100 px-3 py-1 text-sm"
@@ -289,7 +282,6 @@ const AdminPostsPage: React.FC = () => {
         </AnimatePresence>
       </div>
 
-      {/* 処理中オーバーレイ */}
       <AnimatePresence>
         {isSubmitting && (
           <motion.div
