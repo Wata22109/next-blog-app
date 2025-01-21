@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useAuth } from "@/app/_hooks/useAuth";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faSpinner,
@@ -38,6 +39,7 @@ const Page: React.FC = () => {
 
   const { id } = useParams() as { id: string };
   const router = useRouter();
+  const { token } = useAuth(); // トークンの取得
 
   // 投稿記事とカテゴリの取得
   useEffect(() => {
@@ -107,6 +109,13 @@ const Page: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    // ▼ 追加: トークンが取得できない場合はアラートを表示して処理中断
+    if (!token) {
+      window.alert("予期せぬ動作：トークンが取得できません。");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -128,6 +137,7 @@ const Page: React.FC = () => {
         cache: "no-store",
         headers: {
           "Content-Type": "application/json",
+          Authorization: token,
         },
         body: JSON.stringify(requestBody),
       });
@@ -152,6 +162,11 @@ const Page: React.FC = () => {
   };
 
   const handleDelete = async () => {
+    // ▼ 追加: トークンが取得できない場合はアラートを表示して処理中断
+    if (!token) {
+      window.alert("予期せぬ動作：トークンが取得できません。");
+      return;
+    }
     if (!window.confirm("この投稿記事を本当に削除しますか？")) {
       return;
     }
@@ -161,6 +176,10 @@ const Page: React.FC = () => {
       const res = await fetch(`/api/admin/posts/${id}`, {
         method: "DELETE",
         cache: "no-store",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token,
+        },
       });
 
       if (!res.ok) {

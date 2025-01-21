@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { useAuth } from "@/app/_hooks/useAuth";
 import {
   faSpinner,
   faExclamationTriangle,
@@ -32,6 +33,8 @@ const NewCategoryPage: React.FC = () => {
     Category[] | null
   >(null);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+
+  const { token } = useAuth(); // トークンの取得
 
   const fetchCategories = async () => {
     try {
@@ -81,6 +84,11 @@ const NewCategoryPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    // ▼ 追加: トークンが取得できない場合はアラートを表示して処理中断
+    if (!token) {
+      window.alert("予期せぬ動作：トークンが取得できません。");
+      return;
+    }
     setIsSubmitting(true);
 
     try {
@@ -88,6 +96,7 @@ const NewCategoryPage: React.FC = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: token,
         },
         body: JSON.stringify({ name: newCategoryName }),
       });

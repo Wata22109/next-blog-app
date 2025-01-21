@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { useAuth } from "@/app/_hooks/useAuth";
 import {
   faSpinner,
   faTrash,
@@ -32,6 +33,8 @@ const CategoryListPage: React.FC = () => {
   const [fetchErrorMsg, setFetchErrorMsg] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
+  const { token } = useAuth(); // トークンの取得
+
   const fetchCategories = async () => {
     try {
       setIsLoading(true);
@@ -60,6 +63,11 @@ const CategoryListPage: React.FC = () => {
   }, []);
 
   const handleDelete = async (id: string, name: string) => {
+    // ▼ 追加: トークンが取得できない場合はアラートを表示して処理中断
+    if (!token) {
+      window.alert("予期せぬ動作：トークンが取得できません。");
+      return;
+    }
     if (
       !window.confirm(
         `カテゴリ「${name}」を削除してもよろしいですか？\n関連する記事のカテゴリ情報も削除されます。`
@@ -73,6 +81,9 @@ const CategoryListPage: React.FC = () => {
       const response = await fetch(`/api/admin/categories/${id}`, {
         method: "DELETE",
         cache: "no-store",
+        headers: {
+          Authorization: token,
+        },
       });
 
       if (!response.ok) {

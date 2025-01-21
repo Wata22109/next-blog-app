@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/app/_hooks/useAuth";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faSpinner,
@@ -41,6 +42,7 @@ const NewPostPage: React.FC = () => {
   >(null);
 
   const router = useRouter();
+  const { token } = useAuth(); // トークンの取得
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -89,6 +91,13 @@ const NewPostPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    // ▼ 追加: トークンが取得できない場合はアラートを表示して処理中断
+    if (!token) {
+      window.alert("予期せぬ動作：トークンが取得できません。");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -97,7 +106,10 @@ const NewPostPage: React.FC = () => {
 
       const response = await fetch("/api/admin/posts", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token,
+        },
         body: JSON.stringify({
           title,
           content,

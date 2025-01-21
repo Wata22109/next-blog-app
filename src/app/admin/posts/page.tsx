@@ -16,6 +16,7 @@ import { twMerge } from "tailwind-merge";
 import Link from "next/link";
 import type { PostApiResponse } from "@/app/_types/PostApiResponse";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/app/_hooks/useAuth";
 
 const AdminPostsPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -24,6 +25,7 @@ const AdminPostsPage: React.FC = () => {
   const [posts, setPosts] = useState<PostApiResponse[] | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const { token } = useAuth(); // トークンの取得
 
   const fetchPosts = async () => {
     try {
@@ -54,6 +56,11 @@ const AdminPostsPage: React.FC = () => {
   }, []);
 
   const handleDelete = async (id: string, title: string) => {
+    // ▼ 追加: トークンが取得できない場合はアラートを表示して処理中断
+    if (!token) {
+      window.alert("予期せぬ動作：トークンが取得できません。");
+      return;
+    }
     if (!window.confirm(`「${title}」を本当に削除しますか？`)) {
       return;
     }
@@ -63,6 +70,10 @@ const AdminPostsPage: React.FC = () => {
       const res = await fetch(`/api/admin/posts/${id}`, {
         method: "DELETE",
         cache: "no-store",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token,
+        },
       });
 
       if (!res.ok) {
