@@ -14,6 +14,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { supabase } from "@/utils/supabase";
 
 const Page: React.FC = () => {
   const [posts, setPosts] = useState<Post[] | null>(null);
@@ -42,24 +43,39 @@ const Page: React.FC = () => {
           throw new Error("データの取得に失敗しました");
         }
         const postResponse: PostApiResponse[] = await response.json();
-        setPosts(
-          postResponse.map((rawPost) => ({
-            id: rawPost.id,
-            title: rawPost.title,
-            content: rawPost.content,
-            coverImage: {
-              url: rawPost.coverImageURL,
-              width: 1000,
-              height: 1000,
-            },
-            createdAt: rawPost.createdAt,
-            updatedAt: rawPost.updatedAt,
-            categories: rawPost.categories.map((category) => ({
-              id: category.category.id,
-              name: category.category.name,
-            })),
-          }))
+
+        // 各投稿のcoverImageKeyからURLを取得
+        const postsWithUrls = await Promise.all(
+          postResponse.map(async (rawPost) => {
+            let coverImageUrl = "";
+            if (rawPost.coverImageKey) {
+              const { data } = supabase.storage
+                .from("cover_image")
+                .getPublicUrl(rawPost.coverImageKey);
+              coverImageUrl = data.publicUrl;
+            }
+
+            return {
+              id: rawPost.id,
+              title: rawPost.title,
+              content: rawPost.content,
+              coverImageKey: rawPost.coverImageKey,
+              coverImage: {
+                url: coverImageUrl,
+                width: 1000,
+                height: 1000,
+              },
+              createdAt: rawPost.createdAt,
+              updatedAt: rawPost.updatedAt,
+              categories: rawPost.categories.map((category) => ({
+                id: category.category.id,
+                name: category.category.name,
+              })),
+            };
+          })
         );
+
+        setPosts(postsWithUrls);
       } catch (e) {
         setFetchError(
           e instanceof Error ? e.message : "予期せぬエラーが発生しました"
@@ -119,7 +135,6 @@ const Page: React.FC = () => {
       </div>
     );
   }
-
   return (
     <main className="mx-auto max-w-4xl p-4">
       <motion.div

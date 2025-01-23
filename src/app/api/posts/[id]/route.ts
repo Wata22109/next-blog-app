@@ -1,5 +1,6 @@
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { NextResponse, NextRequest } from "next/server";
+import { Post } from "@prisma/client";
 
 type RouteParams = {
   params: {
@@ -7,20 +8,17 @@ type RouteParams = {
   };
 };
 
-export const GET = async (req: NextRequest, routeParams: RouteParams) => {
+export const GET = async (req: NextRequest, { params }: RouteParams) => {
   try {
-    // パラメータプレースホルダから id を取得
-    const id = routeParams.params.id;
+    const id = params.id;
 
-    // findUnique は id に一致する「1件」のレコードを取得するメソッド
-    // もし条件に一致するレコードが存在しないときは null が戻り値となる
     const post = await prisma.post.findUnique({
       where: { id },
       select: {
         id: true,
         title: true,
         content: true,
-        coverImageURL: true,
+        coverImageKey: true, // coverImageURLからcoverImageKeyに変更
         createdAt: true,
         updatedAt: true,
         categories: {
@@ -36,15 +34,23 @@ export const GET = async (req: NextRequest, routeParams: RouteParams) => {
       },
     });
 
-    // 投稿記事が存在しないときの ( post が null のときの) 処理
     if (!post) {
       return NextResponse.json(
-        { error: `id='${id}'の投稿記事は見つかりませんでした` },
+        { error: "投稿記事が見つかりません" },
         { status: 404 }
       );
     }
 
-    return NextResponse.json(post);
+    // カテゴリの形式を整形
+    const formattedPost = {
+      ...post,
+      categories: post.categories.map((c) => ({
+        id: c.category.id,
+        name: c.category.name,
+      })),
+    };
+
+    return NextResponse.json(formattedPost);
   } catch (error) {
     console.error(error);
     return NextResponse.json(

@@ -8,5 +8,5 @@ export type Post = {
   createdAt: string;
   updatedAt?: string;
   categories: Category[];
-  coverImage: CoverImage;
+  coverImageKey: string;
 };

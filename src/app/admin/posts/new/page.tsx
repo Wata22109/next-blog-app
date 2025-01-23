@@ -8,13 +8,14 @@ import {
   faArrowLeft,
   faExclamationTriangle,
   faPencilAlt,
-  faImage,
   faTags,
   faInfoCircle,
 } from "@fortawesome/free-solid-svg-icons";
 import { twMerge } from "tailwind-merge";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import Link from "next/link";
+import ImageUploader from "@/app/_components/ImageUploader";
+import { supabase } from "@/utils/supabase";
 
 type SelectableCategory = {
   id: string;
@@ -36,13 +37,24 @@ const NewPostPage: React.FC = () => {
 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [coverImageURL, setCoverImageURL] = useState("");
+  const [coverImageKey, setCoverImageKey] = useState("");
+  const [coverImageUrl, setCoverImageUrl] = useState<string>();
   const [checkableCategories, setCheckableCategories] = useState<
     SelectableCategory[] | null
   >(null);
 
   const router = useRouter();
-  const { token } = useAuth(); // トークンの取得
+  const { token } = useAuth();
+
+  // coverImageKeyが変更されたときにURLを取得
+  useEffect(() => {
+    if (coverImageKey) {
+      const { data } = supabase.storage
+        .from("cover_image")
+        .getPublicUrl(coverImageKey);
+      setCoverImageUrl(data.publicUrl);
+    }
+  }, [coverImageKey]);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -92,7 +104,6 @@ const NewPostPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    // ▼ 追加: トークンが取得できない場合はアラートを表示して処理中断
     if (!token) {
       window.alert("予期せぬ動作：トークンが取得できません。");
       return;
@@ -113,7 +124,7 @@ const NewPostPage: React.FC = () => {
         body: JSON.stringify({
           title,
           content,
-          coverImageURL,
+          coverImageKey,
           categoryIds: selectedCategoryIds,
         }),
       });
@@ -224,23 +235,15 @@ const NewPostPage: React.FC = () => {
             />
           </div>
 
-          {/* カバー画像URL */}
+          {/* カバー画像アップローダー */}
           <div className="mb-6">
-            <label
-              className="mb-2 block font-bold text-gray-700"
-              htmlFor="coverImageURL"
-            >
-              <FontAwesomeIcon icon={faImage} className="mr-2" />
-              カバー画像URL
+            <label className="mb-2 block font-bold text-gray-700">
+              カバー画像
             </label>
-            <input
-              type="url"
-              id="coverImageURL"
-              value={coverImageURL}
-              onChange={(e) => setCoverImageURL(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 p-3 transition-colors focus:border-blue-500 focus:outline-none"
-              placeholder="画像のURLを入力"
-              required
+            <ImageUploader
+              coverImageKey={coverImageKey}
+              coverImageUrl={coverImageUrl}
+              onImageUpload={(key) => setCoverImageKey(key)}
             />
           </div>
 

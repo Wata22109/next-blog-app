@@ -1,74 +1,116 @@
 import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
 
-const prisma = new PrismaClient(); // PrismaClientのインスタンス生成
-
-const main = async () => {
-  // 各テーブルから既存の全レコードを削除
-  await prisma.postCategory?.deleteMany();
-  await prisma.post?.deleteMany();
-  await prisma.category?.deleteMany();
-
-  // カテゴリデータの作成 (テーブルに対するレコードの挿入)
-  const c1 = await prisma.category.create({ data: { name: "カテゴリ1" } });
-  const c2 = await prisma.category.create({ data: { name: "カテゴリ2" } });
-  const c3 = await prisma.category.create({ data: { name: "カテゴリ3" } });
-  const c4 = await prisma.category.create({ data: { name: "カテゴリ4" } });
-
-  // 投稿記事データの作成  (テーブルに対するレコードの挿入)
-  const p1 = await prisma.post.create({
-    data: {
-      title: "投稿1",
-      content: "投稿1の本文。<br/>投稿1の本文。投稿1の本文。",
-      coverImageURL:
-        "https://w1980.blob.core.windows.net/pg3/cover-img-red.jpg",
-      categories: {
-        create: [{ categoryId: c1.id }, { categoryId: c2.id }], // ◀◀ 注目
+async function main() {
+  // サンプルカテゴリの作成
+  const categories = await Promise.all([
+    prisma.category.create({
+      data: {
+        name: "プログラミング",
       },
-    },
-  });
-
-  const p2 = await prisma.post.create({
-    data: {
-      title: "投稿2",
-      content: "投稿2の本文。<br/>投稿2の本文。投稿2の本文。",
-      coverImageURL:
-        "https://w1980.blob.core.windows.net/pg3/cover-img-green.jpg",
-      categories: {
-        create: [{ categoryId: c2.id }, { categoryId: c3.id }], // ◀◀ 注目
+    }),
+    prisma.category.create({
+      data: {
+        name: "技術",
       },
-    },
-  });
-
-  const p3 = await prisma.post.create({
-    data: {
-      title: "投稿3",
-      content: "投稿3の本文。<br/>投稿3の本文。投稿3の本文。",
-      coverImageURL:
-        "https://w1980.blob.core.windows.net/pg3/cover-img-green.jpg",
-      categories: {
-        create: [
-          { categoryId: c1.id },
-          { categoryId: c3.id },
-          { categoryId: c4.id },
-        ], // ◀◀ 注目
+    }),
+    prisma.category.create({
+      data: {
+        name: "デザイン",
       },
-    },
-  });
+    }),
+  ]);
 
-  const p4 = await prisma.post.create({
-    data: {
-      title: "投稿4",
-      content: "投稿4の本文。<br/>投稿4の本文。投稿4の本文。",
-      coverImageURL:
-        "https://w1980.blob.core.windows.net/pg3/cover-img-green.jpg",
-    },
-  });
+  console.log("カテゴリを作成しました:", categories);
 
-  console.log(JSON.stringify(p1, null, 2));
-  console.log(JSON.stringify(p2, null, 2));
-  console.log(JSON.stringify(p3, null, 2));
-  console.log(JSON.stringify(p4, null, 2));
-};
+  // サンプル投稿記事の作成
+  const posts = await Promise.all([
+    prisma.post.create({
+      data: {
+        title: "Next.jsの基礎",
+        content: `Next.jsは、Reactベースのフルスタックフレームワークです。
+        
+サーバーサイドレンダリング（SSR）やスタティックサイトジェネレーション（SSG）をサポートし、高速なWebアプリケーションを構築できます。
+
+基本的な機能：
+1. ファイルベースのルーティング
+2. APIルートの作成
+3. ビルトインの画像最適化
+4. 自動コード分割`,
+        coverImageKey: "sample/nextjs.jpg",
+        categories: {
+          create: [
+            {
+              category: {
+                connect: { id: categories[0].id }, // プログラミング
+              },
+            },
+            {
+              category: {
+                connect: { id: categories[1].id }, // 技術
+              },
+            },
+          ],
+        },
+      },
+    }),
+    prisma.post.create({
+      data: {
+        title: "モダンなUIデザインのトレンド",
+        content: `2024年のUIデザインでは、以下のようなトレンドが注目されています：
+
+1. ニューモーフィズム
+2. ダークモード
+3. マイクロインタラクション
+4. 3Dエレメント
+5. グラデーション
+
+これらのトレンドを適切に組み合わせることで、魅力的なユーザーインターフェースを作成できます。`,
+        coverImageKey: "sample/design.jpg",
+        categories: {
+          create: [
+            {
+              category: {
+                connect: { id: categories[2].id }, // デザイン
+              },
+            },
+          ],
+        },
+      },
+    }),
+    prisma.post.create({
+      data: {
+        title: "TypeScriptとPrismaの組み合わせ",
+        content: `TypeScriptとPrismaを組み合わせることで、型安全なデータベース操作が可能になります。
+
+Prismaの主な利点：
+- 型安全なデータベースクライアント
+- 直感的なAPI
+- マイグレーション管理
+- スキーマ駆動開発
+
+TypeScriptとの相性が良く、開発効率が大幅に向上します。`,
+        coverImageKey: "sample/typescript.jpg",
+        categories: {
+          create: [
+            {
+              category: {
+                connect: { id: categories[0].id }, // プログラミング
+              },
+            },
+            {
+              category: {
+                connect: { id: categories[1].id }, // 技術
+              },
+            },
+          ],
+        },
+      },
+    }),
+  ]);
+
+  console.log("投稿記事を作成しました:", posts);
+}
 
 main()
   .catch((e) => {

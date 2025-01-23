@@ -8,9 +8,10 @@ import {
   faTriangleExclamation,
 } from "@fortawesome/free-solid-svg-icons";
 import { twMerge } from "tailwind-merge";
-import { Post } from "@/app/_types/Post";
-import { Category } from "@/app/_types/Category";
-import { CoverImage } from "@/app/_types/CoverImage";
+import ImageUploader from "@/app/_components/ImageUploader";
+import { supabase } from "@/utils/supabase";
+import type { Post } from "@/app/_types/Post";
+import type { Category } from "@/app/_types/Category";
 
 type SelectableCategory = {
   id: string;
@@ -18,28 +19,32 @@ type SelectableCategory = {
   isSelect: boolean;
 };
 
-// デフォルトのカバー画像の状態
-const defaultCoverImage: CoverImage = {
-  url: "",
-  width: 800,
-  height: 600,
-};
-
-const Page: React.FC = () => {
+const EditPostPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fetchErrorMsg, setFetchErrorMsg] = useState<string | null>(null);
 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [coverImage, setCoverImage] = useState<CoverImage>(defaultCoverImage);
+  const [coverImageKey, setCoverImageKey] = useState("");
+  const [coverImageUrl, setCoverImageUrl] = useState<string>();
   const [checkableCategories, setCheckableCategories] = useState<
     SelectableCategory[] | null
   >(null);
 
   const { id } = useParams() as { id: string };
   const router = useRouter();
-  const { token } = useAuth(); // トークンの取得
+  const { token } = useAuth();
+
+  // coverImageKeyが変更されたときにURLを取得
+  useEffect(() => {
+    if (coverImageKey) {
+      const { data } = supabase.storage
+        .from("cover_image")
+        .getPublicUrl(coverImageKey);
+      setCoverImageUrl(data.publicUrl);
+    }
+  }, [coverImageKey]);
 
   // 投稿記事とカテゴリの取得
   useEffect(() => {
@@ -74,7 +79,7 @@ const Page: React.FC = () => {
         // 状態の更新
         setTitle(postData.title);
         setContent(postData.content);
-        setCoverImage(postData.coverImage || defaultCoverImage);
+        setCoverImageKey(postData.coverImageKey);
 
         setCheckableCategories(
           categoriesData.map((category) => ({
@@ -110,7 +115,6 @@ const Page: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    // ▼ 追加: トークンが取得できない場合はアラートを表示して処理中断
     if (!token) {
       window.alert("予期せぬ動作：トークンが取得できません。");
       return;
@@ -122,19 +126,21 @@ const Page: React.FC = () => {
       const requestBody = {
         title,
         content,
-        coverImage: {
-          url: coverImage.url,
-          width: defaultCoverImage.width,
-          height: defaultCoverImage.height,
-        },
+        coverImageKey,
         categoryIds: checkableCategories
           ? checkableCategories.filter((c) => c.isSelect).map((c) => c.id)
           : [],
       };
 
-      const res = await fetch(`/api/admin/posts/${id}`, {
+      // デバッグログを追加
+      console.log("更新リクエスト:", {
+        url: `/api/admin/posts/${id}`,
         method: "PUT",
-        cache: "no-store",
+        body: requestBody,
+      });
+
+      const res = await fetch(`/api/admin/posts/${id}`, {
+        method: "PUT", // ここがPUTになっているか確認
         headers: {
           "Content-Type": "application/json",
           Authorization: token,
@@ -160,14 +166,13 @@ const Page: React.FC = () => {
       setIsSubmitting(false);
     }
   };
-
   const handleDelete = async () => {
-    // ▼ 追加: トークンが取得できない場合はアラートを表示して処理中断
-    if (!token) {
-      window.alert("予期せぬ動作：トークンが取得できません。");
+    if (!window.confirm("この投稿記事を本当に削除しますか？")) {
       return;
     }
-    if (!window.confirm("この投稿記事を本当に削除しますか？")) {
+
+    if (!token) {
+      window.alert("予期せぬ動作：トークンが取得できません。");
       return;
     }
 
@@ -177,7 +182,6 @@ const Page: React.FC = () => {
         method: "DELETE",
         cache: "no-store",
         headers: {
-          "Content-Type": "application/json",
           Authorization: token,
         },
       });
@@ -257,27 +261,13 @@ const Page: React.FC = () => {
           />
         </div>
 
-        {/* カバー画像URL入力 */}
+        {/* カバー画像アップローダー */}
         <div className="space-y-2">
-          <label
-            htmlFor="coverImageUrl"
-            className="block font-bold text-gray-700"
-          >
-            カバーイメージ (URL)
-          </label>
-          <input
-            type="url"
-            id="coverImageUrl"
-            name="coverImageUrl"
-            className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-            value={coverImage?.url || ""}
-            onChange={(e) =>
-              setCoverImage({
-                ...coverImage,
-                url: e.target.value,
-              })
-            }
-            required
+          <label className="block font-bold text-gray-700">カバー画像</label>
+          <ImageUploader
+            coverImageKey={coverImageKey}
+            coverImageUrl={coverImageUrl}
+            onImageUpload={(key) => setCoverImageKey(key)}
           />
         </div>
 
@@ -352,4 +342,4 @@ const Page: React.FC = () => {
   );
 };
 
-export default Page;
+export default EditPostPage;
